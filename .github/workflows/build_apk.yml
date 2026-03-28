@@ -9,6 +9,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -36,13 +37,19 @@ jobs:
           acrcloudHumsApiSecret = '';
           EOF
 
-      - name: Clean and Get Dependencies
+      - name: Prepare Submodules
+        run: |
+          # This fixes the "path doesn't exist" error by initializing every submodule
+          git submodule update --init --recursive
+          
+          # We need to run 'pub get' in each submodule folder so Alchemy can see them
+          find . -name "pubspec.yaml" -execdir flutter pub get \;
+
+      - name: Build APK
         run: |
           flutter clean
           flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --split-per-abi --release --no-codesign
+          flutter build apk --split-per-abi --release --no-codesign
 
       - name: Upload Finished APK
         uses: actions/upload-artifact@v4
