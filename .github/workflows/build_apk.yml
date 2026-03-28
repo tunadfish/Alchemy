@@ -11,26 +11,13 @@ jobs:
       - name: Force Download All Missing Dependencies
         run: |
           # 1. Setup Figma Squircle
-          curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
-          unzip figma.zip
-          mv figma_squircle-main figma_squircle
+          git clone https://github.com/aloisdeniel/figma_squircle.git figma_squircle
           
           # 2. Setup Liquid Progress Indicator
-          curl -L https://github.com/PetitPrinc3/liquid_progress_indicator_v2/archive/refs/heads/master.zip -o liquid.zip
-          unzip liquid.zip
-          mv liquid_progress_indicator_v2-master liquid_progress_indicator_v2
+          git clone https://github.com/PetitPrinc3/liquid_progress_indicator_v2.git liquid_progress_indicator_v2
 
-          # 3. Setup Scrobblenaut (The tricky one)
-          # We create the directory first to be 100% sure it exists
-          mkdir -p scrobblenaut
-          curl -L https://github.com/u-9/scrobblenaut/archive/refs/heads/dev.zip -o scrobble.zip
-          unzip scrobble.zip -d temp_scrobble
-          # This moves the INSIDE contents to your scrobblenaut folder
-          cp -r temp_scrobble/scrobblenaut-dev/* scrobblenaut/
-          
-          # Clean up zips
-          rm *.zip
-          rm -rf temp_scrobble
+          # 3. Setup Scrobblenaut (Using Git Clone to avoid branch name guessing)
+          git clone https://github.com/u-9/scrobblenaut.git scrobblenaut
 
       - name: Create API Key File
         run: |
@@ -59,7 +46,6 @@ jobs:
 
       - name: Final Build
         run: |
-          # Use --suppress-analytics to keep logs clean
           flutter pub get
           flutter build apk --release
 
