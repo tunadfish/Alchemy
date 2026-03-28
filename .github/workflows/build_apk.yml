@@ -8,12 +8,13 @@ jobs:
       - name: Checkout Main Code
         uses: actions/checkout@v4
         with:
-          # fetch-depth 0 is needed to get the full history for submodules
           fetch-depth: 0
 
-      - name: Download Submodules (The Fix)
+      - name: Force Submodule Sync (The Fix)
         run: |
-          git submodule update --init --recursive
+          # This forces GitHub to download the missing folders
+          git submodule sync --recursive
+          git submodule update --init --recursive --force
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -41,19 +42,18 @@ jobs:
           acrcloudHumsApiSecret = '';
           EOF
 
-      - name: Install Submodule Dependencies
+      - name: Install Dependencies for All Parts
         run: |
-          # This goes into every submodule folder and prepares it
-          find . -maxdepth 3 -name "pubspec.yaml" -execdir flutter pub get \;
-
-      - name: Build Final APK
-        run: |
-          flutter clean
+          # This command tells Flutter to look in EVERY folder for dependencies
           flutter pub get
+          find . -name "pubspec.yaml" -execdir flutter pub get \;
+
+      - name: Build APK
+        run: |
           flutter build apk --split-per-abi --release --no-codesign
 
-      - name: Upload Finished APK
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: alchemy-android-apk
+          name: alchemy-ready-to-install
           path: build/app/outputs/flutter-apk/*.apk
