@@ -7,24 +7,16 @@ jobs:
     steps:
       - name: Checkout Your Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Uses your built-in permissions
 
-      - name: Download All Dependencies
+      - name: Clone Tricky Dependencies
         run: |
-          # 1. Figma Squircle
-          curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
-          unzip -q figma.zip && mv figma_squircle-main figma_squircle
-          
-          # 2. Liquid Progress
-          curl -L https://github.com/PetitPrinc3/liquid_progress_indicator_v2/archive/refs/heads/master.zip -o liquid.zip
-          unzip -q liquid.zip && mv liquid_progress_indicator_v2-master liquid_progress_indicator_v2
-
-          # 3. Scrobblenaut (Using the dev-stable link)
-          curl -L https://github.com/u-9/scrobblenaut/archive/refs/heads/dev.zip -o scrobble.zip
-          unzip -q scrobble.zip && mv scrobblenaut-dev scrobblenaut
-
-          # 4. Move To Background (The one that caused the last crash)
-          curl -L https://github.com/shermanchen/flutter_move_to_background/archive/refs/heads/master.zip -o move.zip
-          unzip -q move.zip && mv flutter_move_to_background-master move_to_background
+          # We use the GITHUB_TOKEN to bypass the password prompt
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/aloisdeniel/figma_squircle.git figma_squircle
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PetitPrinc3/liquid_progress_indicator_v2.git liquid_progress_indicator_v2
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/u-9/scrobblenaut.git scrobblenaut
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/shermanchen/flutter_move_to_background.git move_to_background
 
       - name: Create API Key File
         run: |
@@ -51,14 +43,13 @@ jobs:
         with:
           flutter-version: '3.32.2'
 
-      - name: Final Build Attempt
+      - name: Build APK
         run: |
           flutter pub get
           flutter build apk --release
           
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: Alchemy-Release
+          name: Alchemy-Final
           path: build/app/outputs/flutter-apk/app-release.apk
