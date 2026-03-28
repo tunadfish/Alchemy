@@ -8,20 +8,15 @@ jobs:
       - name: Checkout Main Code
         uses: actions/checkout@v4
 
-      - name: Manually Download Figma Squircle
+      - name: Force Download Missing Folders
         run: |
-          # We use the correct, live link from the original package creator
+          # 1. Get Figma Squircle
           curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
-          unzip figma.zip
-          mv figma_squircle-main figma_squircle
-          rm figma.zip
-
-      - name: Fetch Remaining Parts
-        run: |
-          # This prevents password prompts and ignores any other dead links
-          sed -i 's/git@github.com:/https:\/\/github.com\//g' .gitmodules || true
-          git submodule sync || true
-          git submodule update --init --recursive || true
+          unzip figma.zip && mv figma_squircle-main figma_squircle && rm figma.zip
+          
+          # 2. Get Liquid Progress Indicator (The new missing piece)
+          curl -L https://github.com/thefalken/liquid_progress_indicator_v2/archive/refs/heads/main.zip -o liquid.zip
+          unzip liquid.zip && mv liquid_progress_indicator_v2-main liquid_progress_indicator_v2 && rm liquid.zip
 
       - name: Create API Key File
         run: |
@@ -50,11 +45,9 @@ jobs:
 
       - name: Prepare and Build
         run: |
-          # Prepare all the parts first
-          find . -maxdepth 3 -name "pubspec.yaml" -execdir flutter pub get \;
-          
-          # Build the app
-          flutter build apk --split-per-abi --release --no-codesign
+          # Skip the broken examples and just focus on the main app
+          flutter pub get
+          flutter build apk --split-per-abi --release
 
       - name: Upload Finished APK
         uses: actions/upload-artifact@v4
