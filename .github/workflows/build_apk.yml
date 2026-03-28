@@ -8,23 +8,23 @@ jobs:
       - name: Checkout Your Code
         uses: actions/checkout@v4
 
-      - name: Create Placeholder Folders
+      - name: Download All Dependencies
         run: |
-          # Create the folders so Flutter doesn't crash on 'path not found'
-          mkdir -p figma_squircle
-          mkdir -p liquid_progress_indicator_v2
-          mkdir -p scrobblenaut
+          # 1. Figma Squircle
+          curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
+          unzip -q figma.zip && mv figma_squircle-main figma_squircle
           
-          # Add a fake pubspec to each so Flutter thinks they are real packages
-          echo "name: figma_squircle" > figma_squircle/pubspec.yaml
-          echo "name: liquid_progress_indicator_v2" > liquid_progress_indicator_v2/pubspec.yaml
-          echo "name: scrobblenaut" > scrobblenaut/pubspec.yaml
-          
-          # Create empty lib folders
-          mkdir -p figma_squircle/lib liquid_progress_indicator_v2/lib scrobblenaut/lib
-          touch figma_squircle/lib/figma_squircle.dart
-          touch liquid_progress_indicator_v2/lib/liquid_progress_indicator.dart
-          touch scrobblenaut/lib/scrobblenaut.dart
+          # 2. Liquid Progress
+          curl -L https://github.com/PetitPrinc3/liquid_progress_indicator_v2/archive/refs/heads/master.zip -o liquid.zip
+          unzip -q liquid.zip && mv liquid_progress_indicator_v2-master liquid_progress_indicator_v2
+
+          # 3. Scrobblenaut (Using the dev-stable link)
+          curl -L https://github.com/u-9/scrobblenaut/archive/refs/heads/dev.zip -o scrobble.zip
+          unzip -q scrobble.zip && mv scrobblenaut-dev scrobblenaut
+
+          # 4. Move To Background (The one that caused the last crash)
+          curl -L https://github.com/shermanchen/flutter_move_to_background/archive/refs/heads/master.zip -o move.zip
+          unzip -q move.zip && mv flutter_move_to_background-master move_to_background
 
       - name: Create API Key File
         run: |
@@ -51,15 +51,14 @@ jobs:
         with:
           flutter-version: '3.32.2'
 
-      - name: Final Build
+      - name: Final Build Attempt
         run: |
-          # Try to get whatever packages we CAN get
-          flutter pub get || true
-          # Attempt the build
-          flutter build apk --release --no-pub
-
-      - name: Upload Finished APK
+          flutter pub get
+          flutter build apk --release
+          
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: alchemy-final-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          name: Alchemy-Release
+          path: build/app/outputs/flutter-apk/app-release.apk
