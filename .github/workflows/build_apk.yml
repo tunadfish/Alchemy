@@ -30,21 +30,13 @@ jobs:
             fi
           done
 
-          # 3. Smart Download Scrobblenaut
-          URLS_SCROBBLE=(
-            "https://github.com/u-9/scrobblenaut/archive/refs/heads/main.zip"
-            "https://github.com/u-9/scrobblenaut/archive/refs/heads/master.zip"
-          )
-          for url in "${URLS_SCROBBLE[@]}"; do
-            STATUS=$(curl -o /dev/null -s -w "%{http_code}" -L "$url")
-            if [ "$STATUS" == "200" ]; then
-              curl -L "$url" -o scrobble.zip
-              unzip scrobble.zip -d temp_scrobble
-              mv temp_scrobble/* scrobblenaut
-              rm -rf temp_scrobble scrobble.zip
-              break
-            fi
-          done
+          # 3. Aggressive Download Scrobblenaut
+          # This version handles the renaming more reliably
+          curl -L https://github.com/u-9/scrobblenaut/archive/refs/heads/main.zip -o scrobble.zip
+          unzip scrobble.zip
+          # Move whatever folder was created (likely scrobblenaut-main) to exactly 'scrobblenaut'
+          mv scrobblenaut-* scrobblenaut || mv scrobblenaut-main scrobblenaut
+          rm scrobble.zip
 
       - name: Create API Key File
         run: |
@@ -81,4 +73,3 @@ jobs:
         with:
           name: alchemy-final-apk
           path: build/app/outputs/flutter-apk/*.apk
-
