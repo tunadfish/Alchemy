@@ -30,9 +30,21 @@ jobs:
             fi
           done
 
-          # 3. Get Scrobblenaut (The new error)
-          curl -L https://github.com/u-9/scrobblenaut/archive/refs/heads/master.zip -o scrobble.zip
-          unzip scrobble.zip && mv scrobblenaut-master scrobblenaut && rm scrobble.zip
+          # 3. Smart Download Scrobblenaut
+          URLS_SCROBBLE=(
+            "https://github.com/u-9/scrobblenaut/archive/refs/heads/main.zip"
+            "https://github.com/u-9/scrobblenaut/archive/refs/heads/master.zip"
+          )
+          for url in "${URLS_SCROBBLE[@]}"; do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}" -L "$url")
+            if [ "$STATUS" == "200" ]; then
+              curl -L "$url" -o scrobble.zip
+              unzip scrobble.zip -d temp_scrobble
+              mv temp_scrobble/* scrobblenaut
+              rm -rf temp_scrobble scrobble.zip
+              break
+            fi
+          done
 
       - name: Create API Key File
         run: |
@@ -69,3 +81,4 @@ jobs:
         with:
           name: alchemy-final-apk
           path: build/app/outputs/flutter-apk/*.apk
+
