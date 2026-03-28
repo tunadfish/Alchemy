@@ -5,18 +5,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Main Code
+      - name: Checkout Your Code
         uses: actions/checkout@v4
 
       - name: Force Download Missing Folders
         run: |
-          # 1. Get Figma Squircle
+          # 1. Get Figma Squircle (This worked!)
           curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
           unzip figma.zip && mv figma_squircle-main figma_squircle && rm figma.zip
           
-          # 2. Get Liquid Progress Indicator (The new missing piece)
-          curl -L https://github.com/thefalken/liquid_progress_indicator_v2/archive/refs/heads/main.zip -o liquid.zip
-          unzip liquid.zip && mv liquid_progress_indicator_v2-main liquid_progress_indicator_v2 && rm liquid.zip
+          # 2. Get Liquid Progress Indicator (Corrected link)
+          # We use the original version that Alchemy expects
+          curl -L https://github.com/prahack/liquid_progress_indicator/archive/refs/heads/master.zip -o liquid.zip
+          unzip liquid.zip && mv liquid_progress_indicator-master liquid_progress_indicator_v2 && rm liquid.zip
 
       - name: Create API Key File
         run: |
@@ -43,9 +44,9 @@ jobs:
         with:
           flutter-version: '3.32.2'
 
-      - name: Prepare and Build
+      - name: Final Build
         run: |
-          # Skip the broken examples and just focus on the main app
+          # This tells the app to link the folders we just downloaded
           flutter pub get
           flutter build apk --split-per-abi --release
 
