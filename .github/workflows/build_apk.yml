@@ -8,16 +8,24 @@ jobs:
       - name: Checkout Your Code
         uses: actions/checkout@v4
 
-      - name: Force Download All Missing Dependencies
+      - name: Force Download Dependencies
         run: |
           # 1. Setup Figma Squircle
-          git clone https://github.com/aloisdeniel/figma_squircle.git figma_squircle
+          curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
+          unzip figma.zip && mv figma_squircle-main figma_squircle
           
           # 2. Setup Liquid Progress Indicator
-          git clone https://github.com/PetitPrinc3/liquid_progress_indicator_v2.git liquid_progress_indicator_v2
+          curl -L https://github.com/PetitPrinc3/liquid_progress_indicator_v2/archive/refs/heads/master.zip -o liquid.zip
+          unzip liquid.zip && mv liquid_progress_indicator_v2-master liquid_progress_indicator_v2
 
-          # 3. Setup Scrobblenaut (Using Git Clone to avoid branch name guessing)
-          git clone https://github.com/u-9/scrobblenaut.git scrobblenaut
+          # 3. Setup Scrobblenaut (Using the HEAD/Main download to be safe)
+          curl -L https://github.com/u-9/scrobblenaut/archive/refs/heads/dev.zip -o scrobble.zip || curl -L https://github.com/u-9/scrobblenaut/archive/refs/heads/master.zip -o scrobble.zip
+          unzip scrobble.zip
+          # We check both possible folder names GitHub creates
+          mv scrobblenaut-dev scrobblenaut 2>/dev/null || mv scrobblenaut-master scrobblenaut 2>/dev/null
+          
+          # Debug: Show us what folders actually exist now
+          ls -d */
 
       - name: Create API Key File
         run: |
