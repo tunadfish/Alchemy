@@ -5,15 +5,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Main Code
+      - name: Checkout Code with Permissions
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: 'recursive'
+          fetch-depth: 0
 
-      - name: Manually Install Missing Submodules
+      - name: Create API Key File
         run: |
-          # This manually downloads the exact folder the error is complaining about
-          git clone https://github.com/PetitPrinc3/figma_squircle.git figma_squircle
-          
-          # This ensures the API key file exists
           mkdir -p lib
           cat <<EOF > lib/.env
           deezerGatewayAPI = 'VBK1FSUEXHTSDBJJ';
@@ -40,10 +40,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # We run it in the submodule first, then the main app
-          cd figma_squircle && flutter pub get
-          cd ..
+          # This command forces flutter to find all local submodule paths
           flutter pub get
+          find . -maxdepth 3 -name "pubspec.yaml" -execdir flutter pub get \;
 
       - name: Build APK
         run: |
