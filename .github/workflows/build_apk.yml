@@ -10,14 +10,30 @@ jobs:
 
       - name: Force Download Missing Folders
         run: |
-          # 1. Get Figma Squircle (This worked!)
+          # 1. Get Figma Squircle (This worked perfectly)
           curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
           unzip figma.zip && mv figma_squircle-main figma_squircle && rm figma.zip
           
-          # 2. Get Liquid Progress Indicator (Corrected link)
-          # We use the original version that Alchemy expects
-          curl -L https://github.com/prahack/liquid_progress_indicator/archive/refs/heads/master.zip -o liquid.zip
-          unzip liquid.zip && mv liquid_progress_indicator-master liquid_progress_indicator_v2 && rm liquid.zip
+          # 2. Smart Download Liquid Progress Indicator
+          # This loop tests multiple backup links to find a live ZIP file
+          URLS=(
+            "https://github.com/PetitPrinc3/liquid_progress_indicator_v2/archive/refs/heads/main.zip"
+            "https://github.com/PetitPrinc3/liquid_progress_indicator_v2/archive/refs/heads/master.zip"
+            "https://github.com/BendixMa/liquid_progress_indicator/archive/refs/heads/master.zip"
+            "https://github.com/aagarwal1012/liquid_progress_indicator/archive/refs/heads/master.zip"
+            "https://github.com/aagarwal1012/liquid_progress_indicator/archive/refs/heads/main.zip"
+          )
+          for url in "${URLS[@]}"; do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}" -L "$url")
+            if [ "$STATUS" == "200" ]; then
+              echo "Live link found! Downloading..."
+              curl -L "$url" -o liquid.zip
+              unzip liquid.zip -d temp_liquid
+              mv temp_liquid/* liquid_progress_indicator_v2
+              rm -rf temp_liquid liquid.zip
+              break
+            fi
+          done
 
       - name: Create API Key File
         run: |
@@ -46,7 +62,6 @@ jobs:
 
       - name: Final Build
         run: |
-          # This tells the app to link the folders we just downloaded
           flutter pub get
           flutter build apk --split-per-abi --release
 
