@@ -5,12 +5,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code with Permissions
+      - name: Checkout Your Code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          submodules: 'recursive'
-          fetch-depth: 0
+
+      - name: Force Download Submodules (No Password Needed)
+        run: |
+          # This manually grabs the missing code and puts it in the right folder
+          curl -L https://github.com/PetitPrinc3/figma_squircle/archive/refs/heads/main.zip -o figma.zip
+          unzip figma.zip
+          mv figma_squircle-main figma_squircle
+          rm figma.zip
 
       - name: Create API Key File
         run: |
@@ -27,28 +31,26 @@ jobs:
           acrcloudHumsApiSecret = '';
           EOF
 
-      - name: Setup Java
+      - name: Setup Java & Flutter
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.2'
 
-      - name: Install Dependencies
+      - name: Prepare and Build
         run: |
-          # This command forces flutter to find all local submodule paths
+          # We manually "prep" the downloaded folder so Flutter recognizes it
+          cd figma_squircle
           flutter pub get
-          find . -maxdepth 3 -name "pubspec.yaml" -execdir flutter pub get \;
-
-      - name: Build APK
-        run: |
+          cd ..
+          flutter pub get
           flutter build apk --split-per-abi --release --no-codesign
 
-      - name: Upload Artifact
+      - name: Upload Finished APK
         uses: actions/upload-artifact@v4
         with:
           name: alchemy-final-apk
