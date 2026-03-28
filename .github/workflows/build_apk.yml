@@ -7,28 +7,13 @@ jobs:
     steps:
       - name: Checkout Main Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Force Submodule Sync (The Fix)
+      - name: Manually Install Missing Submodules
         run: |
-          # This forces GitHub to download the missing folders
-          git submodule sync --recursive
-          git submodule update --init --recursive --force
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.32.2'
-
-      - name: Create API Key File
-        run: |
+          # This manually downloads the exact folder the error is complaining about
+          git clone https://github.com/PetitPrinc3/figma_squircle.git figma_squircle
+          
+          # This ensures the API key file exists
           mkdir -p lib
           cat <<EOF > lib/.env
           deezerGatewayAPI = 'VBK1FSUEXHTSDBJJ';
@@ -42,11 +27,23 @@ jobs:
           acrcloudHumsApiSecret = '';
           EOF
 
-      - name: Install Dependencies for All Parts
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.2'
+
+      - name: Install Dependencies
         run: |
-          # This command tells Flutter to look in EVERY folder for dependencies
+          # We run it in the submodule first, then the main app
+          cd figma_squircle && flutter pub get
+          cd ..
           flutter pub get
-          find . -name "pubspec.yaml" -execdir flutter pub get \;
 
       - name: Build APK
         run: |
@@ -55,5 +52,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: alchemy-ready-to-install
+          name: alchemy-final-apk
           path: build/app/outputs/flutter-apk/*.apk
