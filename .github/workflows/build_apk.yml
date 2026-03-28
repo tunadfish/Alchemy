@@ -5,11 +5,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout Main Code
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          # fetch-depth 0 is needed to get the full history for submodules
           fetch-depth: 0
+
+      - name: Download Submodules (The Fix)
+        run: |
+          git submodule update --init --recursive
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -37,15 +41,12 @@ jobs:
           acrcloudHumsApiSecret = '';
           EOF
 
-      - name: Prepare Submodules
+      - name: Install Submodule Dependencies
         run: |
-          # This fixes the "path doesn't exist" error by initializing every submodule
-          git submodule update --init --recursive
-          
-          # We need to run 'pub get' in each submodule folder so Alchemy can see them
-          find . -name "pubspec.yaml" -execdir flutter pub get \;
+          # This goes into every submodule folder and prepares it
+          find . -maxdepth 3 -name "pubspec.yaml" -execdir flutter pub get \;
 
-      - name: Build APK
+      - name: Build Final APK
         run: |
           flutter clean
           flutter pub get
