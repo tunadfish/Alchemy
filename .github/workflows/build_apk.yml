@@ -5,16 +5,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Your Code
+      - name: Checkout Main Code
         uses: actions/checkout@v4
 
-      - name: Force Download Submodules (No Password Needed)
+      - name: Manually Download Figma Squircle
         run: |
-          # This manually grabs the missing code and puts it in the right folder
-          curl -L https://github.com/PetitPrinc3/figma_squircle/archive/refs/heads/main.zip -o figma.zip
+          # We use the correct, live link from the original package creator
+          curl -L https://github.com/aloisdeniel/figma_squircle/archive/refs/heads/main.zip -o figma.zip
           unzip figma.zip
           mv figma_squircle-main figma_squircle
           rm figma.zip
+
+      - name: Fetch Remaining Parts
+        run: |
+          # This prevents password prompts and ignores any other dead links
+          sed -i 's/git@github.com:/https:\/\/github.com\//g' .gitmodules || true
+          git submodule sync || true
+          git submodule update --init --recursive || true
 
       - name: Create API Key File
         run: |
@@ -43,11 +50,10 @@ jobs:
 
       - name: Prepare and Build
         run: |
-          # We manually "prep" the downloaded folder so Flutter recognizes it
-          cd figma_squircle
-          flutter pub get
-          cd ..
-          flutter pub get
+          # Prepare all the parts first
+          find . -maxdepth 3 -name "pubspec.yaml" -execdir flutter pub get \;
+          
+          # Build the app
           flutter build apk --split-per-abi --release --no-codesign
 
       - name: Upload Finished APK
